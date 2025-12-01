@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <title>Terraform Control Panel — {{ project_name or "Project" }}</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap minimal (only for grid) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* -------- THEME TOKENS -------- */
+      :root {
+        --bg-1: #05060b;
+        --bg-2: #0b1224;
+        --panel-bg: rgba(10, 14, 28, 0.92);
+        --card-bg: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.012),
+          rgba(255, 255, 255, 0.006)
+        );
+        --accent: #7c6cff;
+        --accent-2: #3bd5d5;
+        --muted: #9aa6b2;
+        --text: #e9f0fb; /* main readable text on dark mode */
+        --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+          monospace;
+        --success: #3fe0a6;
+        --danger: #ff7a7a;
+        --glass-border: rgba(255, 255, 255, 0.06);
+        --card-radius: 12px;
+      }
+
+      [data-theme="light"] {
+        --bg-1: #f4f7fb;
+        --bg-2: #eef3fb;
+        --panel-bg: rgba(255, 255, 255, 0.98);
+        --card-bg: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.02),
+          rgba(0, 0, 0, 0.01)
+        );
+        --accent: #4f46e5;
+        --accent-2: #0891b2;
+        --muted: #475569;
+        --text: #071033;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+        --glass-border: rgba(10, 20, 30, 0.06);
+      }
+
+      /* -------- RESET & BASE -------- */
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* Page layout */
+      body {
+        background: radial-gradient(
+            800px 600px at 10% 10%,
+            rgba(124, 108, 255, 0.06),
+            transparent
+          ),
+          linear-gradient(180deg, var(--bg-1), var(--bg-2));
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        padding: 18px;
+      }
+      .container-full {
+        width: 100%;
+        max-width: 1500px;
+      }
+      .panel {
+        height: calc(100vh - 36px);
+        border-radius: 16px;
+        background: var(--panel-bg);
+        border: 1px solid var(--glass-border);
+        padding: 18px;
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 18px;
+        box-shadow: 0 28px 60px rgba(2, 6, 23, 0.6);
+        overflow: hidden;
+      }
+      @media (max-width: 1100px) {
+        .panel {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+      .title {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .title h1 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+      }
+      .title p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      /* THEME TOGGLE - improved */
+      .theme-toggle {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        border: 1px solid var(--glass-border);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.01),
+          transparent
+        );
+        font-weight: 700;
+      }
+
+      /* LEFT: Project / Demo */
+      .left {
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--card-bg);
+        border: 1px dashed rgba(255, 255, 255, 0.02);
+        overflow: auto;
+      }
+      .project-card {
+        padding: 16px;
+        min-height: 420px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .project-title {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .project-sub {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      /* DEMO FLOW - visual */
+      .demo-area {
+        display: flex;
+        gap: 18px;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-top: 10px;
+        padding: 14px;
+        border-radius: 12px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.01),
+          rgba(255, 255, 255, 0.005)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.02);
+      }
+      .flow {
+        flex: 1;
+        min-width: 320px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .flow-steps {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+      .step {
+        width: 120px;
+        height: 86px;
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.006)
+        );
+        font-weight: 700;
+        color: var(--text);
+        box-shadow: 0 12px 28px rgba(2, 6, 23, 0.35);
+        transform-style: preserve-3d;
+      }
+      .step .icon {
+        font-size: 20px;
+        margin-bottom: 6px;
+      }
+      .step .label {
+        font-size: 0.95rem;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .step.active {
+        background: linear-gradient(
+          180deg,
+          rgba(124, 108, 255, 0.12),
+          rgba(124, 108, 255, 0.03)
+        );
+        border-color: rgba(124, 108, 255, 0.6);
+        box-shadow: 0 20px 46px rgba(124, 108, 255, 0.07);
+      }
+      .step.float {
+        animation: float 4s ease-in-out infinite;
+      }
+      @keyframes float {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+
+      .connector {
+        width: 36px;
+        height: 8px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        box-shadow: 0 8px 18px rgba(124, 108, 255, 0.06);
+      }
+      .connector.pulse {
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scaleX(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scaleX(1.06);
+          opacity: 0.85;
+        }
+        100% {
+          transform: scaleX(1);
+          opacity: 1;
+        }
+      }
+
+      .aws-cloud {
+        width: 160px;
+        height: 140px;
+        border-radius: 12px;
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(59, 213, 213, 0.06),
+          rgba(124, 108, 255, 0.03)
+        );
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        box-shadow: 0 12px 36px rgba(2, 6, 23, 0.32);
+      }
+
+      .flow-summary {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      /* RIGHT: controls area */
+      .right {
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: auto;
+      }
+      .card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 12px;
+        border: 1px solid var(--glass-border);
+      }
+      .card .card-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .info {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      /* IMPORT / EXPORT controls */
+      .import-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn-ui {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--glass-border);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.01),
+          transparent
+        );
+        color: var(--text);
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn-download {
+        border-color: rgba(124, 108, 255, 0.75);
+        box-shadow: 0 8px 28px rgba(124, 108, 255, 0.06);
+      }
+      .btn-upload {
+        border-color: rgba(59, 213, 213, 0.6);
+        box-shadow: 0 8px 28px rgba(59, 213, 213, 0.04);
+      }
+      .notice {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        background: rgba(255, 255, 255, 0.01);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+      }
+
+      /* Config form */
+      .config-form .form-label {
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .form-control {
+        background: transparent;
+        color: var(--text);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        padding: 10px 12px;
+        font-size: 0.95rem;
+      }
+      .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.2);
+      }
+      .small-note {
+        color: var(--muted);
+        font-size: 0.86rem;
+        margin-top: 6px;
+      }
+
+      /* Terraform action buttons */
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .tf-action {
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid var(--glass-border);
+        font-weight: 800;
+        cursor: pointer;
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        transition: transform 0.14s ease, box-shadow 0.14s ease;
+      }
+      .tf-action:hover {
+        transform: translateY(-4px);
+      }
+      .tf-action:active {
+        transform: translateY(-1px) scale(0.998);
+      }
+
+      .tf-action.init {
+        background: linear-gradient(
+          180deg,
+          rgba(99, 102, 241, 0.12),
+          rgba(99, 102, 241, 0.03)
+        );
+        border-color: rgba(99, 102, 241, 0.9);
+        box-shadow: 0 12px 32px rgba(99, 102, 241, 0.06);
+        color: var(--text);
+      }
+      .tf-action.validate {
+        background: linear-gradient(
+          180deg,
+          rgba(34, 197, 94, 0.1),
+          rgba(34, 197, 94, 0.02)
+        );
+        border-color: rgba(34, 197, 94, 0.9);
+        box-shadow: 0 12px 32px rgba(34, 197, 94, 0.06);
+        color: var(--text);
+      }
+      .tf-action.plan {
+        background: linear-gradient(
+          180deg,
+          rgba(124, 108, 255, 0.14),
+          rgba(124, 108, 255, 0.03)
+        );
+        border-color: rgba(124, 108, 255, 0.95);
+        box-shadow: 0 14px 36px rgba(124, 108, 255, 0.08);
+        color: var(--text);
+      }
+      .tf-action.apply {
+        background: linear-gradient(
+          180deg,
+          rgba(63, 224, 166, 0.08),
+          rgba(63, 224, 166, 0.02)
+        );
+        border-color: rgba(63, 224, 166, 0.95);
+        box-shadow: 0 14px 36px rgba(63, 224, 166, 0.08);
+        color: var(--text);
+      }
+      .tf-action.destroy {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 122, 122, 0.06),
+          rgba(255, 122, 122, 0.02)
+        );
+        border-color: rgba(255, 122, 122, 0.9);
+        box-shadow: 0 12px 32px rgba(255, 122, 122, 0.06);
+        color: var(--text);
+      }
+
+      /* status/console */
+      .status-pill {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.01);
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .console {
+        margin-top: 12px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.03),
+          rgba(255, 255, 255, 0.01)
+        );
+      }
+      .console-header {
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      }
+      .console-body {
+        padding: 12px;
+        max-height: 300px;
+        overflow: auto;
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        color: var(--text);
+        white-space: pre-wrap;
+      }
+
+      /* NS list */
+      .ns-list {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .ns-item {
+        font-family: var(--mono);
+        padding: 8px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--text);
+        font-size: 0.92rem;
+      }
+      .copy-btn {
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        cursor: pointer;
+        background: transparent;
+        color: var(--muted);
+      }
+
+      /* Scrollbar (subtle) */
+      .right::-webkit-scrollbar,
+      .left::-webkit-scrollbar,
+      .console-body::-webkit-scrollbar {
+        width: 10px;
+      }
+      .right::-webkit-scrollbar-thumb,
+      .left::-webkit-scrollbar-thumb,
+      .console-body::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+      }
+
+      /* small screens */
+      @media (max-width: 760px) {
+        .step {
+          width: 94px;
+          height: 74px;
+        }
+        .aws-cloud {
+          width: 120px;
+          height: 100px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container-full">
+      <div class="panel">
+        <!-- LEFT -->
+        <div class="left">
+          <div class="project-card">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+              "
+            >
+              <div>
+                <div class="project-title">AWS Secure Web Hosting</div>
+                <div class="project-sub">
+                  Flask UI • Terraform Runner • One-click infra
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center">
+                <div class="theme-toggle" id="themeToggle">🌙 Dark</div>
+              </div>
+            </div>
+
+            <div style="color: var(--muted); font-size: 0.96rem">
+              Use the controls on the right to configure, import/export, and run
+              Terraform commands.
+            </div>
+
+            <!-- START: DEMO FLOW (replaces old, simple text area) -->
+            <div class="demo-area" aria-hidden="false">
+              <div class="flow">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                  "
+                >
+                  <div style="font-weight: 800; color: var(--muted)">
+                    Project Demo Flow
+                  </div>
+                </div>
+
+                <div class="flow-steps" role="list">
+                  <div class="step float active" id="step-init" role="listitem">
+                    <div class="icon">🧱</div>
+                    <div class="label">terraform init</div>
+                  </div>
+
+                  <div class="connector pulse" aria-hidden="true"></div>
+
+                  <div class="step float" id="step-validate" role="listitem">
+                    <div class="icon">✅</div>
+                    <div class="label">terraform validate</div>
+                  </div>
+
+                  <div class="connector" aria-hidden="true"></div>
+
+                  <div class="step float" id="step-plan" role="listitem">
+                    <div class="icon">🧠</div>
+                    <div class="label">terraform plan</div>
+                  </div>
+
+                  <div class="connector" aria-hidden="true"></div>
+
+                  <div class="step float" id="step-apply" role="listitem">
+                    <div class="icon">⚡</div>
+                    <div class="label">terraform apply</div>
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                    margin-top: 8px;
+                  "
+                >
+                  <div class="flow-summary">
+                    After <strong>apply</strong>, Terraform creates AWS
+                    resources. Name servers appear in Environment panel.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right side notes -->
+              <div
+                style="
+                  width: 360px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 10px;
+                  padding-left: 6px;
+                "
+              >
+                <div style="font-weight: 800; color: var(--muted)">
+                  How to demo
+                </div>
+                <ol
+                  style="
+                    margin: 0 0 0 18px;
+                    color: var(--muted);
+                    line-height: 1.6;
+                  "
+                >
+                  <li>
+                    Fill config or Upload a <code>terraform.tfvars</code> file.
+                  </li>
+                  <li>
+                    Click <strong>terraform init</strong> →
+                    <strong>validate</strong> → <strong>plan</strong>.
+                  </li>
+                  <li>
+                    Run <strong>apply</strong>. Wait until resources are
+                    created.
+                  </li>
+                  <li>
+                    Copy NS from AWS Environment card and update your registrar.
+                  </li>
+                </ol>
+
+                <div
+                  style="
+                    margin-top: auto;
+                    padding: 10px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    background: rgba(255, 255, 255, 0.01);
+                    color: var(--muted);
+                  "
+                >
+                  <strong style="color: var(--accent)">Tip</strong>
+                  <div style="font-size: 0.88rem; margin-top: 6px">
+                    Run <code>terraform plan</code> to preview changes &
+                    possible costs before applying.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- END: DEMO FLOW -->
+          </div>
+        </div>
+
+        <!-- RIGHT (controls) -->
+        <div class="right">
+          <!-- AWS ENV -->
+          <div class="card">
+            <div class="card-title">AWS Environment</div>
+            <div class="info">
+              <strong>Region:</strong>
+              <span style="font-weight: 700">{{ aws_region }}</span>
+            </div>
+            <div style="margin-top: 8px; color: var(--muted)">
+              Make sure your AWS CLI is configured (or provide keys below).
+            </div>
+
+            <div style="margin-top: 12px">
+              <div style="font-weight: 700; color: var(--muted)">
+                Route 53 Name Servers
+              </div>
+
+              {% if ns_records and ns_records|length > 0 %}
+              <div class="ns-list">
+                {% for ns in ns_records %}
+                <div class="ns-item">
+                  <div>{{ ns }}</div>
+                  <button
+                    class="copy-btn"
+                    onclick="copyToClipboard('{{ ns }}')"
+                  >
+                    Copy
+                  </button>
+                </div>
+                {% endfor %}
+              </div>
+              <div style="margin-top: 8px; color: var(--muted)">
+                Copy these to your registrar's nameserver settings.
+              </div>
+              {% else %}
+              <div style="margin-top: 8px; color: var(--muted)">
+                NS records not available yet. Run
+                <strong>terraform apply</strong> then refresh.
+              </div>
+              {% if ns_error %}
+              <div style="margin-top: 8px; color: var(--muted)">
+                <strong>Note:</strong> {{ ns_error.split('\\n')[0] }}
+                <a
+                  href="#"
+                  id="showNsDetails"
+                  style="color: var(--accent); font-weight: 700"
+                  >Show details</a
+                >
+              </div>
+              <pre
+                id="nsDetails"
+                style="
+                  display: none;
+                  margin-top: 8px;
+                  padding: 10px;
+                  background: rgba(255, 255, 255, 0.01);
+                  border-radius: 8px;
+                  font-family: var(--mono);
+                  font-size: 0.9rem;
+                  white-space: pre-wrap;
+                "
+              >
+{{ ns_error }}</pre
+              >
+              {% endif %} {% endif %}
+            </div>
+          </div>
+
+          <!-- IMPORT/EXPORT -->
+          <div class="card">
+            <div class="card-title">Import / Export Configuration</div>
+
+            <div class="import-actions">
+              <a
+                href="/download-template"
+                class="btn-ui btn-download"
+                title="Download template"
+                >⬇️ Download Template</a
+              >
+
+              <label class="btn-ui btn-upload" title="Upload config">
+                ⬆️ Upload Config
+                <input
+                  id="tfvarsFileInput"
+                  type="file"
+                  accept=".tfvars,.json,.tfvars.json"
+                  style="display: none"
+                />
+              </label>
+
+              <div
+                id="uploadStatus"
+                style="color: var(--muted); margin-left: 8px"
+              >
+                No file uploaded
+              </div>
+            </div>
+
+            <div class="notice" role="note" style="margin-top: 10px">
+              Supported: <strong>.tfvars</strong>, <strong>.json</strong>,
+              <strong>.tfvars.json</strong>. The file must contain simple
+              <code>key = "value"</code> entries or a top-level JSON object.
+              Secrets remain local — do not commit `terraform.tfvars` to git.
+            </div>
+
+            <div style="margin-top: 10px; color: var(--muted)">
+              <strong>Required variables (preview):</strong>
+              <div
+                style="
+                  display: flex;
+                  gap: 8px;
+                  flex-wrap: wrap;
+                  margin-top: 8px;
+                "
+              >
+                <div
+                  style="
+                    padding: 6px 8px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    font-size: 0.86rem;
+                  "
+                >
+                  aws_region
+                </div>
+                <div
+                  style="
+                    padding: 6px 8px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    font-size: 0.86rem;
+                  "
+                >
+                  domain_name
+                </div>
+                <div
+                  style="
+                    padding: 6px 8px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    font-size: 0.86rem;
+                  "
+                >
+                  github_repo_url
+                </div>
+                <div
+                  style="
+                    padding: 6px 8px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    font-size: 0.86rem;
+                  "
+                >
+                  key_name
+                </div>
+                <div
+                  style="
+                    padding: 6px 8px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    font-size: 0.86rem;
+                  "
+                >
+                  aws_access_key
+                </div>
+                <div
+                  style="
+                    padding: 6px 8px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    font-size: 0.86rem;
+                  "
+                >
+                  aws_secret_key
+                </div>
+                <div
+                  style="
+                    padding: 6px 8px;
+                    border-radius: 8px;
+                    background: rgba(255, 255, 255, 0.02);
+                    border: 1px solid rgba(255, 255, 255, 0.02);
+                    font-size: 0.86rem;
+                  "
+                >
+                  allow_ssh_cidr
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuration form -->
+          <div class="card config-form">
+            <div class="card-title">Configuration</div>
+            <form method="POST" id="tfForm" class="needs-validation" novalidate>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="form-label">AWS Region</label>
+                  <input
+                    name="aws_region"
+                    class="form-control"
+                    required
+                    pattern="^[a-z]{2}-[a-z]+-\d$"
+                    placeholder="us-east-1"
+                    value="{{ cfg_aws_region or '' }}"
+                  />
+                  <div class="invalid-feedback">
+                    Valid region (eg: us-east-1)
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Domain Name</label>
+                  <input
+                    name="domain_name"
+                    class="form-control"
+                    required
+                    pattern="^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$"
+                    placeholder="example.com"
+                    value="{{ cfg_domain_name or '' }}"
+                  />
+                  <div class="invalid-feedback">Valid domain (example.com)</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">GitHub Repo URL</label>
+                  <input
+                    name="github_repo_url"
+                    class="form-control"
+                    required
+                    pattern="^https://github\.com/[^/\s]+/[^/\s]+/?$"
+                    placeholder="https://github.com/user/repo"
+                    value="{{ cfg_github_repo_url or '' }}"
+                  />
+                  <div class="invalid-feedback">
+                    Valid GitHub URL (https://github.com/user/repo)
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">EC2 Key Pair Name</label>
+                  <input
+                    name="key_name"
+                    class="form-control"
+                    required
+                    pattern="^[A-Za-z0-9_.-]+$"
+                    placeholder="my-ec2-key"
+                    value="{{ cfg_key_name or '' }}"
+                  />
+                  <div class="invalid-feedback">
+                    Key pair name (letters, numbers, -, _, .)
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">AWS Access Key</label>
+                  <input
+                    type="password"
+                    name="aws_access_key"
+                    class="form-control"
+                    required
+                    pattern="^AKIA[0-9A-Z]{16}$"
+                    placeholder="AKIA..."
+                    value="{{ cfg_aws_access_key or '' }}"
+                  />
+                  <div class="invalid-feedback">
+                    AWS Access Key (starts with AKIA)
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">AWS Secret Key</label>
+                  <input
+                    type="password"
+                    name="aws_secret_key"
+                    class="form-control"
+                    required
+                    pattern="^[0-9A-Za-z/+]{40}$"
+                    placeholder="Your secret key"
+                    value="{{ cfg_aws_secret_key or '' }}"
+                  />
+                  <div class="invalid-feedback">
+                    40-character AWS Secret Access Key
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Allow SSH From (CIDR)</label>
+                  <input
+                    name="allow_ssh_cidr"
+                    class="form-control"
+                    required
+                    pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$"
+                    placeholder="0.0.0.0/0"
+                    value="{{ cfg_allow_ssh_cidr or '' }}"
+                  />
+                  <div class="invalid-feedback">
+                    Valid CIDR (e.g., 0.0.0.0/0)
+                  </div>
+                </div>
+              </div>
+
+              <div class="small-note">
+                Fill these values then choose a Terraform action below.
+              </div>
+
+              <div class="actions">
+                <button
+                  type="submit"
+                  name="action"
+                  value="init"
+                  class="tf-action init"
+                >
+                  🧱 terraform init
+                </button>
+                <button
+                  type="submit"
+                  name="action"
+                  value="validate"
+                  class="tf-action validate"
+                >
+                  ✅ terraform validate
+                </button>
+                <button
+                  type="submit"
+                  name="action"
+                  value="plan"
+                  class="tf-action plan"
+                >
+                  🧠 terraform plan
+                </button>
+                <button
+                  type="submit"
+                  name="action"
+                  value="apply"
+                  class="tf-action apply"
+                >
+                  ⚡ terraform apply
+                </button>
+                <button
+                  type="submit"
+                  name="action"
+                  value="destroy"
+                  class="tf-action destroy"
+                >
+                  🔥 terraform destroy
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Status and console -->
+          <div class="card">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <div>
+                {% if last_cmd %}
+                <div class="status-pill">
+                  <span
+                    class="dot"
+                    style="background:{{ '#3fe0a6' if exit_code==0 else '#ff7a7a' }}"
+                  ></span>
+                  Last: <code style="margin-left: 8px">{{ last_cmd }}</code>
+                </div>
+                {% else %}
+                <div class="status-pill">
+                  <span class="dot" style="background: var(--accent)"></span>
+                  Idle • Waiting
+                </div>
+                {% endif %}
+              </div>
+              <div style="color: var(--muted)">
+                <small
+                  >Ensure <code>aws configure</code> &
+                  <code>terraform</code> are installed</small
+                >
+              </div>
+            </div>
+
+            <div class="console" style="margin-top: 12px">
+              <div class="console-header">
+                <div style="font-weight: 800">Terraform Console Output</div>
+                {% if exit_code is not none %}
+                <div style="font-weight: 700">Exit: {{ exit_code }}</div>
+                {% endif %}
+              </div>
+              <div class="console-body">
+                {% if last_cmd %}
+                <pre>{{ last_output }}</pre>
+                {% else %}
+                <div style="color: var(--muted)">
+                  No command executed yet. Use the buttons to run Terraform and
+                  view full output.
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- end right -->
+      </div>
+      <!-- end panel -->
+    </div>
+    <!-- end container -->
+
+    <!-- Scripts -->
+    <script>
+      // Theme toggle with localStorage
+      (function () {
+        const html = document.documentElement;
+        const btn = document.getElementById("themeToggle");
+        const saved = localStorage.getItem("tf-ui-theme") || "dark";
+        html.setAttribute("data-theme", saved);
+        btn.innerText = saved === "dark" ? "🌙 Dark" : "☀️ Light";
+
+        btn.addEventListener("click", () => {
+          const cur = html.getAttribute("data-theme") || "dark";
+          const next = cur === "dark" ? "light" : "dark";
+          html.setAttribute("data-theme", next);
+          localStorage.setItem("tf-ui-theme", next);
+          btn.innerText = next === "dark" ? "🌙 Dark" : "☀️ Light";
+        });
+      })();
+
+      // Form validation
+      (function () {
+        const form = document.getElementById("tfForm");
+        if (!form) return;
+        form.addEventListener(
+          "submit",
+          function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault();
+              event.stopPropagation();
+              form.classList.add("was-validated");
+              const bad = form.querySelector(":invalid");
+              if (bad)
+                bad.scrollIntoView({ behavior: "smooth", block: "center" });
+              return false;
+            }
+            // optional: highlight step based on action click (handled below)
+          },
+          false
+        );
+      })();
+
+      // Flow highlight when user clicks buttons
+      (function () {
+        function clearActive() {
+          ["step-init", "step-validate", "step-plan", "step-apply"].forEach(
+            (id) => {
+              const el = document.getElementById(id);
+              if (el) el.classList.remove("active");
+            }
+          );
+        }
+        function activate(id) {
+          clearActive();
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.add("active");
+          const next = el.nextElementSibling;
+          if (next && next.classList.contains("connector")) {
+            next.classList.add("pulse");
+            setTimeout(() => next.classList.remove("pulse"), 1300);
+          }
+        }
+
+        // click detection
+        document.addEventListener("click", (e) => {
+          const btn = e.target.closest('button[type="submit"]');
+          if (!btn) return;
+          const v = btn.getAttribute("value");
+          if (v === "init") activate("step-init");
+          if (v === "validate") activate("step-validate");
+          if (v === "plan") activate("step-plan");
+          if (v === "apply") activate("step-apply");
+        });
+      })();
+
+      // Copy helper
+      function copyToClipboard(text) {
+        if (!navigator.clipboard) {
+          alert("Copy not supported");
+          return;
+        }
+        navigator.clipboard.writeText(text).then(
+          () => alert("Copied: " + text),
+          () => alert("Copy failed")
+        );
+      }
+
+      // show/hide ns details
+      (function () {
+        const link = document.getElementById("showNsDetails");
+        if (!link) return;
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const pre = document.getElementById("nsDetails");
+          if (!pre) return;
+          if (pre.style.display === "block") {
+            pre.style.display = "none";
+            link.innerText = "Show details";
+          } else {
+            pre.style.display = "block";
+            link.innerText = "Hide details";
+          }
+        });
+      })();
+
+      // Upload handler (calls /upload-tfvars)
+      (function () {
+        const input = document.getElementById("tfvarsFileInput");
+        const status = document.getElementById("uploadStatus");
+        if (!input) return;
+        input.addEventListener("change", async (ev) => {
+          const file = ev.target.files[0];
+          if (!file) return;
+          status.innerText = "Uploading...";
+          status.style.color = "var(--muted)";
+          const fd = new FormData();
+          fd.append("file", file);
+          try {
+            const res = await fetch("/upload-tfvars", {
+              method: "POST",
+              body: fd,
+            });
+            const j = await res.json();
+            if (!j.ok) {
+              status.innerText = "Error: " + (j.error || "Invalid file");
+              status.style.color = "var(--danger)";
+              return;
+            }
+            const vars = j.vars || {};
+            Object.keys(vars).forEach((k) => {
+              const el = document.querySelector(`[name="${k}"]`);
+              if (el) el.value = vars[k];
+            });
+            status.innerText = "Configuration loaded — form auto-filled.";
+            status.style.color = "var(--success)";
+          } catch (err) {
+            console.error(err);
+            status.innerText = "Upload failed";
+            status.style.color = "var(--danger)";
+          } finally {
+            input.value = "";
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
