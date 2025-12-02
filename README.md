@@ -270,7 +270,9 @@ Perfect expansion path for next semester:
 
 **Balwant Singh**
 Cloud & DevOps Engineer 
+
 GitHub: [https://github.com/YOUR_USERNAME](https://github.com/balwant2711)
+
 LinkedIn: [https://linkedin.com/in/YOUR_USERNAME](https://linkedin.com/in/balwant-singh-aa024b37b/)
 
 ---
